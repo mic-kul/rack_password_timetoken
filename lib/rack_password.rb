@@ -1,4 +1,6 @@
 require 'rack_password/version'
+require 'time'
+require 'hmac-md5'
 
 module RackPassword
   class Block
@@ -62,6 +64,23 @@ module RackPassword
     def valid_code?(code)
       return false if @options[:auth_codes].nil?
       @options[:auth_codes].include? code
+    end
+  end
+
+  class TimeToken
+    attr_accessor :code
+
+    def initialize(code)
+      @code = code
+    end
+
+    def generate(valid_until)
+      HMAC::MD5.new("code=#{code}&time=#{valid_until}").hexdigest
+    end
+
+    def valid?(token, time)
+      return false unless token && time && token == generate(time)
+      Time.parse(time) >= Time.now
     end
   end
 end
