@@ -18,11 +18,14 @@ module RackPassword
       bv = BlockValidator.new(@options, request)
       return @app.call(env) if bv.valid?
 
+      params = request.params
 
-      if request.post? and bv.valid_code?(request.params[@options[:code_param].to_s]) # If post method check :code_param value
+      if request.post? and bv.valid_code?(params[@options[:code_param].to_s]) # If post method check :code_param value
         domain = @options[:cookie_domain]
         domain ||= request.host == 'localhost' ? '' : ".#{request.host}"
       [301, {'Location' => request.path, 'Set-Cookie' => "#{@options[:key]}=#{request.params[@options[:code_param].to_s]}; domain=#{domain}; expires=30-Dec-2039 23:59:59 GMT"}, ['']] # Redirect if code is valid
+      elsif request.get? && valid_token?(params[:token], params[:valid_until])
+        [301, {'Location' => request.path, 'Set-Cookie' => "#{@options[:key]}_token=#{params[:token]}; domain=#{domain}; expires=#{valid_until}"}, 'Set-Cookie' => "#{@options[:key]}_time=#{params[:valid_until]}; domain=#{domain}; expires=#{valid_until}"}, ['']] # Redirect if token & time_until are valid
       else
         success_rack_response
       end
@@ -33,6 +36,14 @@ module RackPassword
     end
 
     private
+
+    def valid_token?(token, valid_until)
+      token && valid_until && time_token.valid?(token, valid_until)
+    end
+
+    def time_token
+      @time_token ||= TimeToken.new(@options[:code_param])
+    end
 
     def read_success_view
       @success_view ||= File.open(File.join(File.dirname(__FILE__), "views", "block_middleware.html")).read
@@ -48,7 +59,7 @@ module RackPassword
     end
 
     def valid?
-      valid_path? || valid_code?(@request.cookies[@options[:key].to_s]) || valid_ip?
+      valid_path? || valid_code?(@request.cookies[@options[:key].to_s]) || valid_ip? || valid_token?
     end
 
     def valid_ip?
@@ -64,6 +75,12 @@ module RackPassword
     def valid_code?(code)
       return false if @options[:auth_codes].nil?
       @options[:auth_codes].include? code
+    end
+
+    def valid_token?
+      token = @request.cookies["#{@options[:key].to_s}_token"]
+      valid_until = @request.cookies["#{@options[:key].to_s}_time"]
+      TimeToken.new(@options[:code_param]).valid?(token. valid_until)
     end
   end
 
