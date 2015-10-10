@@ -24,7 +24,10 @@ From now on, your staging app should prompt for `janusz` password before you acc
 
 You can also generate time based access tokens. Visit `your-rack-protected-site.com/?code=janusz`.
 Your token will be generated and query string that should be appended to the url will be displayed:
-`?token=5959dd0c8481a19b4c0d0955cabc215f465cf1182923f90e00751daa0f38a0a4&valid_until=2015-10-11+00:45:00`
+
+```
+?token=5959dd0c8481a19b4c0d0955cabc215f465cf1182923f90e00751daa0f38a0a4&valid_until=2015-10-11+00:45:00
+```
 
 ## Contributing
 
