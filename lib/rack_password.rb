@@ -1,10 +1,8 @@
-require "rack_password/version"
+require 'rack_password/version'
 
 module RackPassword
-
   class Block
-
-    def initialize app, options = {}
+    def initialize(app, options = {})
       @app = app
       @options = {
         :key => :staging_auth,
@@ -12,7 +10,7 @@ module RackPassword
         }.merge options
     end
 
-    def call env
+    def call(env)
       request = Rack::Request.new env
 
       bv = BlockValidator.new(@options, request)
@@ -42,7 +40,7 @@ module RackPassword
   class BlockValidator
     attr_accessor :options, :request
 
-    def initialize options, request
+    def initialize(options, request)
       @options = options
       @request = request
     end
@@ -61,10 +59,9 @@ module RackPassword
       !!match
     end
 
-    def valid_code? code
+    def valid_code?(code)
       return false if @options[:auth_codes].nil?
       @options[:auth_codes].include? code
     end
   end
-
 end
